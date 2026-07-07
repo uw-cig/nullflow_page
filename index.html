@@ -1,168 +1,198 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>NullFlow: One-Step Generative Reconstruction</title>
-  <meta name="description" content="Project page for NullFlow, a one-step generative reconstruction framework for imaging inverse problems." />
   <link rel="stylesheet" href="style.css" />
-  <script>
-    window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] } };
-  </script>
-  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 </head>
+
 <body>
-  <main class="page">
-    <section class="hero">
-      <p class="eyebrow">Computational Imaging Group (CIG)</p>
+  <header class="hero">
+    <div class="hero-inner">
       <h1>NullFlow: One-Step Generative Reconstruction</h1>
-      <p class="subtitle">A one-step posterior sampler for imaging inverse problems by learning mean flows in the measurement-consistent null space.</p>
+
+      <p class="subtitle">
+        A one-step generative solver for imaging inverse problems by learning a mean flow
+        in the measurement-consistent null space.
+      </p>
 
       <div class="authors">
-        <span>Xiao Shi<sup>†</sup></span>
-        <span>Edward P. Chandler<sup>†</sup></span>
-        <span>Chicago Y. Park</span>
-        <span>Shirin Shoushtari</span>
-        <span>Ulugbek S. Kamilov</span>
+        Xiao Shi<sup>†</sup>, Edward P. Chandler<sup>†</sup>, Chicago Y. Park,<br />
+        Shirin Shoushtari, Ulugbek S. Kamilov
       </div>
-      <p class="affiliation">University of Wisconsin–Madison and Washington University in St. Louis</p>
-      <p class="equal"><sup>†</sup>Equal contribution.</p>
+
+      <div class="affiliation">
+        University of Wisconsin–Madison and Washington University in St. Louis
+      </div>
+
+      <div class="note">
+        <sup>†</sup> Equal contribution
+      </div>
 
       <div class="buttons">
-        <a class="button" href="assets/NullFlow_Preprint.pdf">Paper</a>
-        <a class="button muted" href="#bibtex">BibTeX</a>
-        <a class="button muted" href="#" aria-disabled="true" onclick="return false;">Code coming soon</a>
+        <a class="btn" href="assets/NullFlow_Preprint.pdf" target="_blank">Paper</a>
+        <a class="btn" href="https://github.com/uw-cig/NullFlow" target="_blank">Code</a>
       </div>
+    </div>
+  </header>
 
-      <figure class="main-figure">
-        <img src="assets/nullflow_subspace.png" alt="NullFlow learns an average velocity inside a measurement-consistent subspace." />
-        <figcaption>
-          NullFlow reconstructs in one step without leaving the measurement-consistent subspace $\mathcal{M}_y = \{x: Ax=y\}$.
-        </figcaption>
-      </figure>
-    </section>
-
-    <section>
+  <main>
+    <section class="section">
       <h2>Abstract</h2>
-      <hr />
       <p>
-        We propose <strong>NullFlow</strong>, a principled framework for one-step generative image reconstruction. The key idea is to confine the generative flow to a measurement-consistent subspace. Because the flow never leaves this subspace, NullFlow needs no separate data-fidelity corrections, unlike existing solvers.
-      </p>
-      <p>
-        NullFlow samples in a single network evaluation by learning the flow's average velocity, avoiding the step-by-step integration required by traditional flow matching methods. We prove that the average velocity of this constrained flow yields a training objective whose global minimizer is a one-step posterior sampler. On image inpainting, NullFlow matches state-of-the-art diffusion solvers while cutting inference from hundreds of network evaluations to one.
+        We propose <strong>NullFlow</strong>, a principled framework for one-step
+        generative image reconstruction. The key idea is to confine the generative
+        flow to a measurement-consistent subspace. Because the flow never leaves this
+        subspace, NullFlow needs no separate data-fidelity corrections, unlike existing
+        solvers. NullFlow samples in a single network evaluation by learning the flow's
+        average velocity, avoiding the step-by-step integration of traditional flow
+        matching methods.
       </p>
     </section>
 
-    <section>
-      <h2>Core idea</h2>
-      <hr />
-      <div class="grid two">
-        <div class="card">
-          <h3>Measurement consistency by construction</h3>
-          <p>
-            For an ill-posed linear forward model $y=Ax+n$, NullFlow decomposes the image into a fixed row-space component and a learned null-space component:
-          </p>
-          <p class="equation">$x = A^\dagger Ax + (I-A^\dagger A)x$.</p>
-          <p>
-            The flow is restricted to $\mathrm{null}(A)$, so every state remains inside the affine measurement-consistent subspace.
-          </p>
-        </div>
-        <div class="card">
-          <h3>One-step sampling via mean flow</h3>
-          <p>
-            Instead of integrating instantaneous velocities over many time steps, NullFlow learns the average conditional velocity $u_{r,t}(x_t \mid y)$ and evaluates it once from $r=0$ to $t=1$.
-          </p>
-          <p class="equation">$x = \mathrm{net}(A^\dagger y + P\epsilon, r=0, t=1)$.</p>
-        </div>
+    <section class="section">
+      <h2>Overview</h2>
+
+      <div class="figure-wrap">
+        <img src="assets/page2.png" alt="NullFlow overview figure" />
       </div>
+
+      <p>
+        NullFlow reconstructs images without leaving the measurement-consistent
+        subspace. Instead of learning an instantaneous velocity and integrating it
+        over many steps, it learns the average velocity of a flow confined to the
+        null space of the forward operator. This enables posterior sampling with a
+        single network evaluation.
+      </p>
     </section>
 
-    <section>
-      <h2>Method overview</h2>
-      <hr />
+    <section class="section">
+      <h2>Key Idea</h2>
+
       <p>
-        NullFlow transports a Gaussian null-space initialization $A^\dagger y + Pz$ to a posterior sample $x \sim p(x \mid y)$, where $P=I-A^\dagger A$ is the null-space projector. The path is designed so the observed pixels or measured components stay fixed, while only the unobserved null-space content evolves.
+        For an ill-posed linear inverse problem, the image can be decomposed into a
+        measured row-space component and an unobserved null-space component. NullFlow
+        keeps the row-space component fixed and learns to generate plausible
+        null-space content conditioned on the measurement.
       </p>
-      <div class="algorithm-grid">
-        <div class="algorithm">
-          <h3>Training</h3>
-<pre><code>t, r = sample_t_r()
-e = randn(x.shape)
-z = t * proj_null(e) + (1-t) * proj_null(x) + A_pinv(y)
 
-# average velocity from x-prediction
-def u_fn(z, r, t):
-    return (z - net(z, r, t)) / t
-
-v = u_fn(z, t, t)
-u, dudt = jvp(u_fn, (z, r, t), (v, 0, 1))
-V = u + (t-r) * stopgrad(dudt)
-loss = metric(V, e_M - x)</code></pre>
-        </div>
-        <div class="algorithm">
-          <h3>One-step sampling</h3>
-<pre><code>e_M = A_pinv(y) + proj_null(randn(x_shape))
-x = net(e_M, r=0, t=1)</code></pre>
-        </div>
+      <div class="math-box">
+        <p>
+          <strong>Measurement-consistent subspace:</strong>
+        </p>
+        <p class="equation">
+          M<sub>y</sub> = { x : Ax = y }
+        </p>
       </div>
+
+      <p>
+        Since all generated states remain inside this affine subspace, NullFlow is
+        measurement-consistent by construction and does not require additional
+        projection or data-consistency correction steps during inference.
+      </p>
     </section>
 
-    <section>
-      <h2>Numerical evaluation</h2>
-      <hr />
+    <section class="section">
+      <h2>Numerical Results</h2>
+
       <p>
-        We evaluate NullFlow on noiseless center-mask inpainting with FFHQ $256\times256$ RGB images, where a fixed $128\times128$ center patch is removed. NullFlow uses one network evaluation at inference.
+        On FFHQ center-mask image inpainting, NullFlow achieves strong perceptual
+        reconstruction quality with only one function evaluation. A single NullFlow
+        sample gives sharp perceptual reconstructions, while averaging many samples
+        approaches the MMSE estimate and improves distortion-oriented metrics.
       </p>
+
       <div class="table-wrap">
         <table>
           <thead>
-            <tr><th>Method</th><th>NFE ↓</th><th>LPIPS ↓</th><th>PSNR ↑</th><th>SSIM ↑</th></tr>
+            <tr>
+              <th>Method</th>
+              <th>NFE ↓</th>
+              <th>LPIPS ↓</th>
+              <th>PSNR ↑</th>
+              <th>SSIM ↑</th>
+            </tr>
           </thead>
           <tbody>
-            <tr><td>U-Net</td><td>1</td><td>0.123</td><td><strong>26.59</strong></td><td>0.896</td></tr>
-            <tr><td>DPIR</td><td>200</td><td>0.264</td><td>18.42</td><td>0.797</td></tr>
-            <tr><td>DPS</td><td>1000</td><td>0.157</td><td>23.89</td><td>0.829</td></tr>
-            <tr><td>DiffPIR</td><td>200</td><td>0.101</td><td>25.12</td><td>0.871</td></tr>
-            <tr><td>PnP-Flow</td><td>500</td><td>0.089</td><td>24.80</td><td><strong>0.900</strong></td></tr>
-            <tr><td>Flower</td><td>500</td><td>0.105</td><td>25.03</td><td>0.892</td></tr>
-            <tr class="highlight"><td>NullFlow</td><td><strong>1</strong></td><td><strong>0.055</strong></td><td>24.54</td><td>0.874</td></tr>
+            <tr>
+              <td>U-Net</td>
+              <td>1</td>
+              <td>0.123</td>
+              <td><strong>26.59</strong></td>
+              <td>0.896</td>
+            </tr>
+            <tr>
+              <td>DPIR</td>
+              <td>200</td>
+              <td>0.264</td>
+              <td>18.42</td>
+              <td>0.797</td>
+            </tr>
+            <tr>
+              <td>DPS</td>
+              <td>1000</td>
+              <td>0.157</td>
+              <td>23.89</td>
+              <td>0.829</td>
+            </tr>
+            <tr>
+              <td>DiffPIR</td>
+              <td>200</td>
+              <td>0.101</td>
+              <td>25.12</td>
+              <td>0.871</td>
+            </tr>
+            <tr>
+              <td>PnP-Flow</td>
+              <td>500</td>
+              <td>0.089</td>
+              <td>24.80</td>
+              <td><strong>0.900</strong></td>
+            </tr>
+            <tr>
+              <td>Flower</td>
+              <td>500</td>
+              <td>0.105</td>
+              <td>25.03</td>
+              <td>0.892</td>
+            </tr>
+            <tr class="highlight">
+              <td>NullFlow</td>
+              <td>1</td>
+              <td><strong>0.055</strong></td>
+              <td>24.54</td>
+              <td>0.874</td>
+            </tr>
           </tbody>
         </table>
       </div>
-      <figure>
-        <img src="assets/extracted_p5_0.png" alt="Visual comparison of measurement, U-Net, Flower, NullFlow sample, and NullFlow sample average." />
-        <figcaption>
-          A single NullFlow sample is sharp and perceptually faithful, while averaging 100 samples approaches an MMSE-like estimate.
-        </figcaption>
-      </figure>
-      <figure>
-        <img src="assets/extracted_p6_0.png" alt="PSNR, SSIM, and LPIPS as a function of the number of averaged NullFlow samples." />
-        <figcaption>
-          Averaging more posterior samples improves PSNR and SSIM but degrades LPIPS, illustrating the perception–distortion tradeoff.
-        </figcaption>
-      </figure>
+
+      <div class="figure-wrap">
+        <img src="assets/page5.png" alt="NullFlow reconstruction results" />
+      </div>
+
+      <div class="figure-wrap">
+        <img src="assets/page6.png" alt="Sample averaging results" />
+      </div>
     </section>
 
-    <section id="paper">
-      <h2>Paper</h2>
-      <hr />
-      <p class="paper-link"><a href="assets/NullFlow_Preprint.pdf">Download the preprint PDF</a></p>
-    </section>
-
-    <section id="bibtex">
+    <section class="section">
       <h2>BibTeX</h2>
-      <hr />
-<pre class="bib"><code>@article{shi2026nullflow,
+
+      <pre><code>@article{shi2026nullflow,
   title   = {NullFlow: One-Step Generative Reconstruction},
   author  = {Shi, Xiao and Chandler, Edward P. and Park, Chicago Y. and Shoushtari, Shirin and Kamilov, Ulugbek S.},
   journal = {Preprint},
   year    = {2026}
 }</code></pre>
     </section>
-
-    <footer>
-      <p>Acknowledgement: page style adapted from the public CIG project-page template style used by the MSM website.</p>
-    </footer>
   </main>
+
+  <footer>
+    <p>
+      Computational Imaging Group
+    </p>
+  </footer>
 </body>
 </html>
