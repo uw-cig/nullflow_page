@@ -1,254 +1,149 @@
-* {
-  box-sizing: border-box;
-}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NullFlow: One-Step Generative Reconstruction</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
 
-html {
-  scroll-behavior: smooth;
-}
+<body>
+  <header class="hero">
+    <div class="hero-inner">
+      <h1>NullFlow: One-Step Generative Reconstruction</h1>
 
-body {
-  margin: 0;
-  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-  background: #f2f3f5;
-  color: #222;
-}
+      <p class="subtitle">
+        A one-step generative solver for imaging inverse problems by learning a mean flow
+        in the measurement-consistent null space.
+      </p>
 
-.hero {
-  padding: 62px 20px 72px;
-  text-align: center;
-  border-bottom: 1px solid #d8d8d8;
-  background: #f2f3f5;
-}
+      <div class="authors">
+        Xiao Shi<sup>†</sup>, Edward P. Chandler<sup>†</sup>, Chicago Y. Park,<br />
+        Shirin Shoushtari, Ulugbek S. Kamilov
+      </div>
 
-.hero-inner {
-  max-width: 1180px;
-  margin: 0 auto;
-}
+      <div class="affiliation">
+        University of Wisconsin–Madison and Washington University in St. Louis
+      </div>
 
-.hero h1 {
-  margin: 0;
-  font-size: 3rem;
-  font-weight: 500;
-  line-height: 1.15;
-  letter-spacing: -0.5px;
-}
+      <div class="note">
+        <sup>†</sup> Equal contribution
+      </div>
 
-.subtitle {
-  max-width: 980px;
-  margin: 28px auto 0;
-  font-size: 1.2rem;
-  line-height: 1.6;
-  font-weight: 300;
-  color: #8f8f8f;
-}
+      <div class="buttons">
+        <a class="btn" href="assets/NullFlow_Preprint.pdf" target="_blank">Paper</a>
+        <a class="btn" href="https://github.com/uw-cig/NullFlow" target="_blank">Code</a>
+      </div>
+    </div>
+  </header>
 
-.authors {
-  margin-top: 50px;
-  font-size: 1.5rem;
-  line-height: 1.65;
-  font-weight: 300;
-  color: #555;
-}
+  <main>
+    <section class="section">
+      <h2>Abstract</h2>
+      <p>
+        We propose <strong>NullFlow</strong>, a principled framework for one-step generative
+        image reconstruction. The key idea is to confine the generative flow to a
+        measurement-consistent subspace. Because the flow never leaves this subspace,
+        NullFlow needs no separate data-fidelity corrections, unlike existing solvers.
+        NullFlow samples in a single network evaluation by learning the flow’s average
+        velocity, avoiding the step-by-step integration of traditional flow matching methods.
+      </p>
+    </section>
 
-.affiliation {
-  margin-top: 20px;
-  font-size: 1.08rem;
-  color: #444;
-}
+    <section class="section">
+      <h2>Overview</h2>
+      <p>
+        NullFlow reconstructs images in a single step without leaving the
+        measurement-consistent subspace. Instead of integrating an instantaneous
+        velocity over many steps, it learns the average velocity of a flow restricted
+        to the null space of the forward operator.
+      </p>
 
-.note {
-  margin-top: 10px;
-  font-size: 0.95rem;
-  color: #777;
-}
+      <div class="figure-wrap">
+        <img src="assets/figure1.png" alt="NullFlow overview figure" />
+      </div>
+    </section>
 
-.buttons {
-  margin-top: 46px;
-}
+    <section class="section">
+      <h2>Method</h2>
+      <p>
+        For ill-posed linear inverse problems, the measurement determines only the
+        row-space component of the image, while the null-space component must be
+        inferred from prior knowledge. NullFlow keeps the measurement-consistent part
+        fixed and learns to generate plausible null-space content conditioned on the
+        measurement.
+      </p>
 
-.btn {
-  display: inline-block;
-  margin: 6px 8px;
-  padding: 13px 28px;
-  background: #0b7cff;
-  color: #fff;
-  text-decoration: none;
-  border-radius: 8px;
-  font-size: 1.08rem;
-  font-weight: 400;
-  transition: background 0.2s ease, transform 0.2s ease;
-}
+      <div class="math-box">
+        <p><strong>Measurement-consistent subspace</strong></p>
+        <p class="equation">M<sub>y</sub> = { x : Ax = y }</p>
+      </div>
 
-.btn:hover {
-  background: #005fd1;
-  transform: translateY(-1px);
-}
+      <p>
+        Since every state stays inside this affine subspace, NullFlow is
+        measurement-consistent by construction and does not need an additional
+        projection or correction step during inference.
+      </p>
+    </section>
 
-main {
-  background: #ffffff;
-}
+    <section class="section">
+      <h2>Algorithms</h2>
+      <p>
+        The training procedure learns the average conditional velocity in the null
+        space, while inference reconstructs an image in a single network evaluation.
+      </p>
 
-.section {
-  max-width: 980px;
-  margin: 0 auto;
-  padding: 56px 22px 6px;
-}
+      <div class="grid-two">
+        <div class="card">
+          <h3>Algorithm 1: Training</h3>
+          <img src="assets/algorithm1.png" alt="Algorithm 1: NullFlow Training" />
+        </div>
 
-.section h2 {
-  margin: 0 0 20px;
-  font-size: 1.9rem;
-  font-weight: 500;
-  color: #222;
-}
+        <div class="card">
+          <h3>Algorithm 2: One-Step Sampling</h3>
+          <img src="assets/algorithm2.png" alt="Algorithm 2: NullFlow One-Step Sampling" />
+        </div>
+      </div>
+    </section>
 
-.section p {
-  margin: 0 0 20px;
-  font-size: 1.06rem;
-  line-height: 1.78;
-  color: #333;
-}
+    <section class="section">
+      <h2>Results</h2>
+      <p>
+        On FFHQ center-mask image inpainting, NullFlow achieves strong perceptual
+        quality with only one function evaluation. A single sample gives sharp and
+        visually faithful reconstructions, while averaging multiple samples approaches
+        the MMSE estimate and improves distortion-oriented metrics.
+      </p>
 
-.figure-wrap {
-  margin: 26px auto 10px;
-  text-align: center;
-}
+      <div class="card single-card">
+        <h3>Quantitative Comparison</h3>
+        <img src="assets/table1.png" alt="Table 1 quantitative results" />
+      </div>
 
-.figure-wrap img {
-  max-width: 100%;
-  height: auto;
-  border-radius: 6px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
-  background: #fff;
-}
+      <div class="card single-card">
+        <h3>Representative Reconstructions</h3>
+        <img src="assets/figure2.png" alt="Figure 2 representative reconstructions" />
+      </div>
 
-.math-box {
-  margin: 26px 0;
-  padding: 22px 26px;
-  background: #f5f7fa;
-  border-left: 4px solid #0b7cff;
-  border-radius: 6px;
-}
+      <div class="card single-card">
+        <h3>Effect of Sample Averaging</h3>
+        <img src="assets/figure3.png" alt="Figure 3 effect of sample averaging" />
+      </div>
+    </section>
 
-.math-box p {
-  margin-bottom: 6px;
-}
+    <section class="section">
+      <h2>BibTeX</h2>
+      <pre><code>@article{shi2026nullflow,
+  title   = {NullFlow: One-Step Generative Reconstruction},
+  author  = {Shi, Xiao and Chandler, Edward P. and Park, Chicago Y. and Shoushtari, Shirin and Kamilov, Ulugbek S.},
+  journal = {Preprint},
+  year    = {2026}
+}</code></pre>
+    </section>
+  </main>
 
-.equation {
-  text-align: center;
-  font-family: "Times New Roman", Times, serif;
-  font-size: 1.35rem !important;
-  margin-top: 8px;
-}
-
-.grid-two {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 24px;
-  margin-top: 24px;
-}
-
-.card {
-  background: #fff;
-  border: 1px solid #e6e6e6;
-  border-radius: 10px;
-  padding: 18px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
-}
-
-.card h3 {
-  margin: 0 0 14px;
-  font-size: 1.12rem;
-  font-weight: 500;
-  color: #222;
-}
-
-.card img {
-  width: 100%;
-  height: auto;
-  border-radius: 6px;
-  display: block;
-}
-
-.single-card {
-  margin-top: 24px;
-}
-
-pre {
-  margin: 22px 0 40px;
-  padding: 22px;
-  overflow-x: auto;
-  background: #f5f7fa;
-  border-radius: 8px;
-  font-size: 0.95rem;
-  line-height: 1.55;
-  border: 1px solid #e5e5e5;
-}
-
-code {
-  font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
-}
-
-footer {
-  padding: 36px 20px 44px;
-  text-align: center;
-  background: #f2f3f5;
-  color: #777;
-  border-top: 1px solid #d8d8d8;
-  margin-top: 40px;
-}
-
-footer p {
-  margin: 0;
-  font-size: 0.95rem;
-}
-
-@media (max-width: 900px) {
-  .grid-two {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 768px) {
-  .hero {
-    padding: 46px 18px 58px;
-  }
-
-  .hero h1 {
-    font-size: 2.15rem;
-  }
-
-  .subtitle {
-    font-size: 1.02rem;
-    margin-top: 22px;
-  }
-
-  .authors {
-    font-size: 1.18rem;
-    margin-top: 38px;
-  }
-
-  .affiliation {
-    font-size: 1rem;
-  }
-
-  .btn {
-    font-size: 1rem;
-    padding: 12px 22px;
-  }
-
-  .section {
-    padding-top: 42px;
-  }
-
-  .section h2 {
-    font-size: 1.55rem;
-  }
-
-  .section p {
-    font-size: 1rem;
-  }
-
-  .equation {
-    font-size: 1.2rem !important;
-  }
-}
+  <footer>
+    <p>Computational Imaging Group</p>
+  </footer>
+</body>
+</html>
