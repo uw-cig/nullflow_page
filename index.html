@@ -59,9 +59,22 @@
         to the null space of the forward operator.
       </p>
 
-      <div class="figure-wrap">
-        <img src="assets/figure1.png" alt="NullFlow overview figure" />
-      </div>
+        <figure class="paper-figure">
+          <img src="assets/flow-meanflow-on-manifold-tangent.png" alt="NullFlow overview figure" />
+
+          <figcaption>
+            <strong>Fig. 1.</strong>
+            NullFlow is able to reconstruct in a single step without leaving the
+            measurement-consistent subspace
+            <span class="math">M<sub>y</sub> := { x : Ax = y }</span>
+            by learning the average velocity
+            <span class="blue">u<sub>0,1</sub>(x<sub>1</sub>|y)</span>
+            rather than the instantaneous velocity
+            <span class="orange">v<sub>t</sub>(x<sub>t</sub>|y)</span>
+            of a <span class="red">flow</span> confined to
+            <span class="math">M<sub>y</sub></span>.
+          </figcaption>
+        </figure>
     </section>
 
     <section class="section">
