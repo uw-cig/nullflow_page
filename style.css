@@ -1,170 +1,431 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>NullFlow: One-Step Generative Reconstruction</title>
-  <link rel="stylesheet" href="style.css" />
-</head>
+* {
+  box-sizing: border-box;
+}
 
-<body>
-  <header class="hero">
-    <div class="hero-inner">
-      <h1>NullFlow: One-Step Generative Reconstruction</h1>
+html {
+  scroll-behavior: smooth;
+}
 
-      <p class="subtitle">
-        A one-step generative solver for imaging inverse problems by learning a mean flow
-        in the measurement-consistent null space.
-      </p>
+body {
+  margin: 0;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  background: #f2f3f5;
+  color: #222;
+}
 
-      <div class="authors">
-        Xiao Shi<sup>†</sup>, Edward P. Chandler<sup>†</sup>, Chicago Y. Park,<br />
-        Shirin Shoushtari, Ulugbek S. Kamilov
-      </div>
+/* =========================
+   Header / Hero
+========================= */
 
-      <div class="affiliation">
-        University of Wisconsin–Madison and Washington University in St. Louis
-      </div>
+.hero {
+  padding: 62px 20px 72px;
+  text-align: center;
+  border-bottom: 1px solid #d8d8d8;
+  background: #f2f3f5;
+}
 
-      <div class="note">
-        <sup>†</sup> Equal contribution
-      </div>
+.hero-inner {
+  max-width: 1180px;
+  margin: 0 auto;
+}
 
-      <div class="buttons">
-        <a class="btn" href="assets/NullFlow_Preprint.pdf" target="_blank">Paper</a>
-        <a class="btn" href="https://github.com/uw-cig/NullFlow" target="_blank">Code</a>
-      </div>
-    </div>
-  </header>
+.hero h1 {
+  margin: 0;
+  font-size: 3rem;
+  font-weight: 500;
+  line-height: 1.15;
+  letter-spacing: -0.5px;
+}
 
-  <main>
-    <section class="section">
-      <div class="text-block">
-        <h2>Abstract</h2>
+.subtitle {
+  max-width: none;
+  margin: 28px auto 0;
+  font-size: 1.2rem;
+  line-height: 1.6;
+  font-weight: 300;
+  color: #8f8f8f;
+  white-space: nowrap;
+}
 
-        <p>
-          We propose <strong>NullFlow</strong>, a principled framework for one-step generative
-          image reconstruction. The key idea is to confine the generative flow to a
-          measurement-consistent subspace. Because the flow never leaves this subspace,
-          NullFlow needs no separate data-fidelity corrections, unlike existing solvers.
-          NullFlow samples in a single network evaluation by learning the flow’s average
-          velocity, avoiding the step-by-step integration of traditional flow matching methods.
-        </p>
-      </div>
+.authors {
+  margin-top: 50px;
+  font-size: 1.5rem;
+  line-height: 1.65;
+  font-weight: 300;
+  color: #555;
+}
 
-      <figure class="paper-figure wide-figure">
-        <img
-          src="assets/flow-meanflow-on-manifold-tangent.png"
-          alt="NullFlow overview figure"
-        />
+.affiliation {
+  margin-top: 20px;
+  font-size: 1.08rem;
+  color: #444;
+}
 
-        <figcaption>
-          <strong>Fig. 1.</strong>
-          NullFlow is able to reconstruct in a single step without leaving the
-          measurement-consistent subspace
-          <span class="math">M<sub>y</sub> := { x : Ax = y }</span>
-          by learning the average velocity
-          <span class="blue">u<sub>0,1</sub>(x<sub>1</sub>|y)</span>
-          rather than the instantaneous velocity
-          <span class="orange">v<sub>t</sub>(x<sub>t</sub>|y)</span>
-          of a <span class="red">flow</span> confined to
-          <span class="math">M<sub>y</sub></span>.
-        </figcaption>
-      </figure>
-    </section>
+.note {
+  margin-top: 10px;
+  font-size: 0.95rem;
+  color: #777;
+}
 
-    <section class="section">
-      <div class="text-block">
-        <h2>Method</h2>
+.buttons {
+  margin-top: 46px;
+}
 
-        <p>
-          For ill-posed linear inverse problems, the measurement determines only the
-          row-space component of the image, while the null-space component must be
-          inferred from prior knowledge. NullFlow keeps the measurement-consistent part
-          fixed and learns to generate plausible null-space content conditioned on the
-          measurement.
-        </p>
+.btn {
+  display: inline-block;
+  margin: 6px 8px;
+  padding: 13px 28px;
+  background: #0b7cff;
+  color: #fff;
+  text-decoration: none;
+  border-radius: 8px;
+  font-size: 1.08rem;
+  font-weight: 400;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
 
-        <div class="math-box">
-          <p><strong>Measurement-consistent subspace</strong></p>
-          <p class="equation">M<sub>y</sub> = { x : Ax = y }</p>
-        </div>
+.btn:hover {
+  background: #005fd1;
+  transform: translateY(-1px);
+}
 
-        <p>
-          Since every state stays inside this affine subspace, NullFlow is
-          measurement-consistent by construction and does not need an additional
-          projection or correction step during inference.
-        </p>
-      </div>
-    </section>
+.btn-disabled,
+.btn-disabled:hover {
+  background: #9aa0a6;
+  cursor: default;
+  transform: none;
+}
 
-    <section class="section">
-      <div class="text-block">
-        <h2>Algorithms</h2>
+/* =========================
+   Main Layout
+========================= */
 
-        <p>
-          The training procedure learns the average conditional velocity in the null
-          space, while inference reconstructs an image in a single network evaluation.
-        </p>
-      </div>
+main {
+  background: #ffffff;
+}
 
-      <div class="grid-two">
-        <div class="card">
-          <h3>Algorithm 1: Training</h3>
-          <img src="assets/algorithm1.png" alt="Algorithm 1: NullFlow Training" />
-        </div>
+.section {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 56px 22px 10px;
+}
 
-        <div class="card">
-          <h3>Algorithm 2: One-Step Sampling</h3>
-          <img src="assets/algorithm2.png" alt="Algorithm 2: NullFlow One-Step Sampling" />
-        </div>
-      </div>
-    </section>
+.figure-section {
+  padding-top: 56px;
+  padding-bottom: 24px;
+}
 
-    <section class="section">
-      <div class="text-block">
-        <h2>Results</h2>
+.text-block {
+  max-width: 980px;
+  margin: 0 auto;
+}
 
-        <p>
-          On FFHQ center-mask image inpainting, NullFlow achieves strong perceptual
-          quality with only one function evaluation. A single sample gives sharp and
-          visually faithful reconstructions, while averaging multiple samples approaches
-          the MMSE estimate and improves distortion-oriented metrics.
-        </p>
-      </div>
+.section h2 {
+  margin: 0;
+  text-align: center;
+  font-size: 2.2rem;
+  font-weight: 600;
+  color: #222;
+}
 
-      <div class="card single-card">
-        <h3>Quantitative Comparison</h3>
-        <img src="assets/table1.png" alt="Table 1 quantitative results" />
-      </div>
+.section-divider {
+  width: 72px;
+  height: 3px;
+  margin: 18px auto 30px;
+  background: #0b7cff;
+  border-radius: 999px;
+}
 
-      <div class="card single-card">
-        <h3>Representative Reconstructions</h3>
-        <img src="assets/figure2.png" alt="Figure 2 representative reconstructions" />
-      </div>
+.section p {
+  margin: 0 0 20px;
+  font-size: 1.06rem;
+  line-height: 1.78;
+  color: #333;
+}
 
-      <div class="card single-card">
-        <h3>Effect of Sample Averaging</h3>
-        <img src="assets/figure3.png" alt="Figure 3 effect of sample averaging" />
-      </div>
-    </section>
+/* =========================
+   Shared Caption Block
+   All captions use page text width
+========================= */
 
-    <section class="section">
-      <div class="text-block">
-        <h2>BibTeX</h2>
+.paper-figure figcaption,
+.algorithm-figure figcaption,
+.result-figure figcaption {
+  width: 100%;
+  max-width: 980px;
+  margin: 18px auto 0;
+  text-align: left;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
 
-        <pre><code>@article{shi2026nullflow,
-  title   = {NullFlow: One-Step Generative Reconstruction},
-  author  = {Shi, Xiao and Chandler, Edward P. and Park, Chicago Y. and Shoushtari, Shirin and Kamilov, Ulugbek S.},
-  journal = {Preprint},
-  year    = {2026}
-}</code></pre>
-      </div>
-    </section>
-  </main>
+.paper-figure figcaption p,
+.algorithm-figure figcaption p,
+.result-figure figcaption p {
+  margin: 0 0 12px;
+  font-size: 1.05rem;
+  line-height: 1.6;
+  font-weight: 300;
+  color: #444;
+  text-align: left;
+}
 
-  <footer>
-    <p>Computational Imaging Group</p>
-  </footer>
-</body>
-</html>
+.paper-figure figcaption strong,
+.algorithm-figure figcaption strong,
+.result-figure figcaption strong {
+  font-weight: 700;
+  color: #333;
+}
+
+.caption-extra {
+  margin-top: 10px !important;
+}
+
+/* =========================
+   Figure 1
+========================= */
+
+.paper-figure {
+  max-width: 980px;
+  margin: 0 auto 36px;
+  text-align: center;
+}
+
+.wide-figure {
+  max-width: 980px;
+}
+
+.paper-figure img {
+  display: block;
+  width: 100%;
+  max-width: 780px;
+  height: auto;
+  margin: 0 auto;
+  border: none;
+  outline: none;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+}
+
+.paper-figure figcaption em {
+  font-style: italic;
+}
+
+.math {
+  font-family: "Times New Roman", Times, serif;
+  font-style: italic;
+}
+
+.blue {
+  color: blue;
+  font-weight: 400;
+}
+
+.orange {
+  color: #d97706;
+  font-weight: 400;
+}
+
+.red {
+  color: red;
+  font-weight: 400;
+}
+
+/* =========================
+   Algorithm Figures
+========================= */
+
+.algorithm-figure {
+  max-width: 980px;
+  margin: 30px auto 36px;
+  text-align: center;
+}
+
+.algorithm-figure img {
+  display: block;
+  width: 100%;
+  max-width: 760px;
+  height: auto;
+  margin: 0 auto;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  background: #fff;
+}
+
+/* =========================
+   Result Figures
+========================= */
+
+.result-figure {
+  max-width: 980px;
+  margin: 32px auto 36px;
+  text-align: center;
+}
+
+.result-figure img {
+  display: block;
+  width: 100%;
+  max-width: 980px;
+  height: auto;
+  margin: 0 auto;
+  border: none;
+  border-radius: 6px;
+  background: #fff;
+}
+
+/* Smaller Figure 4 image, but caption remains 980px */
+.compact-result-figure img {
+  max-width: 760px;
+}
+
+/* Center only Figure 4 caption */
+.compact-result-figure figcaption {
+  text-align: center;
+}
+
+.compact-result-figure figcaption p {
+  text-align: center;
+}
+
+/* =========================
+   Math Box
+========================= */
+
+.math-box {
+  margin: 26px 0;
+  padding: 22px 26px;
+  background: #f5f7fa;
+  border-left: 4px solid #0b7cff;
+  border-radius: 6px;
+}
+
+.math-box p {
+  margin-bottom: 6px;
+}
+
+.equation {
+  text-align: center;
+  font-family: "Times New Roman", Times, serif;
+  font-size: 1.35rem !important;
+  margin-top: 8px;
+}
+
+/* =========================
+   BibTeX
+========================= */
+
+pre {
+  margin: 22px 0 40px;
+  padding: 22px;
+  overflow-x: auto;
+  background: #f5f7fa;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  border: 1px solid #e5e5e5;
+}
+
+code {
+  font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
+}
+
+/* =========================
+   Footer
+========================= */
+
+footer {
+  padding: 36px 20px 44px;
+  text-align: center;
+  background: #f2f3f5;
+  color: #777;
+  border-top: 1px solid #d8d8d8;
+  margin-top: 40px;
+}
+
+footer p {
+  margin: 6px 0;
+  font-size: 0.95rem;
+}
+
+/* =========================
+   Responsive
+========================= */
+
+@media (max-width: 900px) {
+  .paper-figure,
+  .wide-figure,
+  .paper-figure img,
+  .paper-figure figcaption,
+  .algorithm-figure,
+  .algorithm-figure img,
+  .algorithm-figure figcaption,
+  .result-figure,
+  .result-figure img,
+  .result-figure figcaption {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+  .hero {
+    padding: 46px 18px 58px;
+  }
+
+  .hero h1 {
+    font-size: 2.15rem;
+  }
+
+  .subtitle {
+    font-size: 1.02rem;
+    margin-top: 22px;
+  }
+
+  .authors {
+    font-size: 1.18rem;
+    margin-top: 38px;
+  }
+
+  .affiliation {
+    font-size: 1rem;
+  }
+
+  .btn {
+    font-size: 1rem;
+    padding: 12px 22px;
+  }
+
+  .section {
+    padding-top: 42px;
+  }
+
+  .figure-section {
+    padding-top: 42px;
+  }
+
+  .section h2 {
+    font-size: 1.85rem;
+  }
+
+  .section-divider {
+    margin: 16px auto 26px;
+  }
+
+  .section p {
+    font-size: 1rem;
+  }
+
+  .equation {
+    font-size: 1.2rem !important;
+  }
+
+  .paper-figure figcaption p,
+  .algorithm-figure figcaption p,
+  .result-figure figcaption p {
+    font-size: 1rem;
+    line-height: 1.5;
+  }
+
+  .compact-result-figure figcaption p {
+    text-align: center;
+  }
+}

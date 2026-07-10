@@ -32,15 +32,48 @@
 
       <div class="buttons">
         <a class="btn" href="assets/NullFlow_Preprint.pdf" target="_blank">Paper</a>
-        <a class="btn" href="https://github.com/uw-cig/NullFlow" target="_blank">Code</a>
+        <span class="btn btn-disabled">Code Coming Soon</span>
       </div>
     </div>
   </header>
 
   <main>
+    <section class="section figure-section">
+      <figure class="paper-figure wide-figure">
+        <img
+          src="assets/flow-meanflow-on-manifold-tangent.png"
+          alt="NullFlow overview figure"
+        />
+
+        <figcaption>
+          <p>
+            <strong>Figure 1.</strong>
+            NullFlow is able to reconstruct in a single step without leaving the
+            measurement-consistent subspace
+            <span class="math">M<sub>y</sub> := { x : Ax = y }</span>
+            by learning the average velocity
+            <span class="blue">u<sub>0,1</sub>(x<sub>1</sub>|y)</span>
+            rather than the instantaneous velocity
+            <span class="orange">v<sub>t</sub>(x<sub>t</sub>|y)</span>
+            of a <span class="red">flow</span> confined to
+            <span class="math">M<sub>y</sub></span>.
+          </p>
+
+          <p class="caption-extra">
+            This figure illustrates the central design of NullFlow: the flow is restricted
+            to the affine measurement-consistent subspace, whose tangent directions lie in
+            the null space of the forward operator. By learning the average velocity of this
+            restricted flow, NullFlow avoids step-by-step integration and produces a
+            reconstruction in one network evaluation.
+          </p>
+        </figcaption>
+      </figure>
+    </section>
+
     <section class="section">
       <div class="text-block">
         <h2>Abstract</h2>
+        <div class="section-divider"></div>
 
         <p>
           We propose <strong>NullFlow</strong>, a principled framework for one-step generative
@@ -51,107 +84,127 @@
           velocity, avoiding the step-by-step integration of traditional flow matching methods.
         </p>
       </div>
+    </section>
 
-      <figure class="paper-figure wide-figure">
+    <section class="section">
+      <div class="text-block">
+        <h2>NullFlow Training Algorithm</h2>
+        <div class="section-divider"></div>
+      </div>
+
+      <figure class="algorithm-figure">
         <img
-          src="assets/flow-meanflow-on-manifold-tangent.png"
-          alt="NullFlow overview figure"
+          src="assets/algorithm1.png"
+          alt="Algorithm 1: NullFlow Training"
         />
 
         <figcaption>
-          <strong>Fig. 1.</strong>
-          NullFlow is able to reconstruct in a single step without leaving the
-          measurement-consistent subspace
-          <span class="math">M<sub>y</sub> := { x : Ax = y }</span>
-          by learning the average velocity
-          <span class="blue">u<sub>0,1</sub>(x<sub>1</sub>|y)</span>
-          rather than the instantaneous velocity
-          <span class="orange">v<sub>t</sub>(x<sub>t</sub>|y)</span>
-          of a <span class="red">flow</span> confined to
-          <span class="math">M<sub>y</sub></span>.
+          <p>
+            <strong>Algorithm 1.</strong>
+            NullFlow training procedure. Given a clean image, measurement, and forward
+            operator, the algorithm samples time variables, perturbs only the null-space
+            component, evaluates the average-velocity network, and uses a JVP-based
+            MeanFlow target to train the model. This encourages the learned update to stay
+            within the measurement-consistent subspace while producing a one-step posterior
+            sample at inference.
+          </p>
         </figcaption>
       </figure>
     </section>
 
     <section class="section">
       <div class="text-block">
-        <h2>Method</h2>
-
-        <p>
-          For ill-posed linear inverse problems, the measurement determines only the
-          row-space component of the image, while the null-space component must be
-          inferred from prior knowledge. NullFlow keeps the measurement-consistent part
-          fixed and learns to generate plausible null-space content conditioned on the
-          measurement.
-        </p>
-
-        <div class="math-box">
-          <p><strong>Measurement-consistent subspace</strong></p>
-          <p class="equation">M<sub>y</sub> = { x : Ax = y }</p>
-        </div>
-
-        <p>
-          Since every state stays inside this affine subspace, NullFlow is
-          measurement-consistent by construction and does not need an additional
-          projection or correction step during inference.
-        </p>
+        <h2>One-Step Sampling</h2>
+        <div class="section-divider"></div>
       </div>
+
+      <figure class="algorithm-figure">
+        <img
+          src="assets/algorithm2.png"
+          alt="Algorithm 2: NullFlow One-Step Sampling"
+        />
+
+        <figcaption>
+          <p>
+            <strong>Algorithm 2.</strong>
+            One-step sampling with NullFlow. The reconstruction is initialized as the
+            pseudo-inverse measurement plus a projected null-space random vector, and the
+            trained network is evaluated once to produce the final image.
+          </p>
+
+          <p class="caption-extra">
+            At inference, NullFlow starts from a measurement-consistent initialization and
+            applies the learned model once. This directly maps a null-space Gaussian
+            initialization to a reconstruction, avoiding the hundreds or thousands of network
+            evaluations typically required by iterative diffusion or flow-based solvers.
+          </p>
+        </figcaption>
+      </figure>
     </section>
 
     <section class="section">
       <div class="text-block">
-        <h2>Algorithms</h2>
-
-        <p>
-          The training procedure learns the average conditional velocity in the null
-          space, while inference reconstructs an image in a single network evaluation.
-        </p>
+        <h2>Numerical Evaluations</h2>
+        <div class="section-divider"></div>
       </div>
 
-      <div class="grid-two">
-        <div class="card">
-          <h3>Algorithm 1: Training</h3>
-          <img src="assets/algorithm1.png" alt="Algorithm 1: NullFlow Training" />
-        </div>
+      <figure class="result-figure">
+        <img
+          src="assets/figure2.png"
+          alt="Representative reconstruction results"
+        />
 
-        <div class="card">
-          <h3>Algorithm 2: One-Step Sampling</h3>
-          <img src="assets/algorithm2.png" alt="Algorithm 2: NullFlow One-Step Sampling" />
-        </div>
-      </div>
-    </section>
+        <figcaption>
+          <p>
+            <strong>Figure 2.</strong>
+            Reconstructions on a test image. Left to right: measurement, U-Net,
+            Flower, a single NullFlow sample, and the average of 100 NullFlow samples.
+            PSNR/LPIPS are shown in the top-left corner of each. A single NullFlow
+            sample is sharp and perceptually faithful (best LPIPS), whereas averaging
+            many samples approaches the MMSE estimate, trading perceptual quality for
+            lower distortion and visibly resembling the MSE-trained U-Net.
+          </p>
+        </figcaption>
+      </figure>
 
-    <section class="section">
-      <div class="text-block">
-        <h2>Results</h2>
+      <figure class="result-figure">
+        <img
+          src="assets/figure3.png"
+          alt="Effect of sample averaging on reconstruction quality"
+        />
 
-        <p>
-          On FFHQ center-mask image inpainting, NullFlow achieves strong perceptual
-          quality with only one function evaluation. A single sample gives sharp and
-          visually faithful reconstructions, while averaging multiple samples approaches
-          the MMSE estimate and improves distortion-oriented metrics.
-        </p>
-      </div>
+        <figcaption>
+          <p>
+            <strong>Figure 3.</strong>
+            Effect of sample averaging on reconstruction quality. Averaging an increasing
+            number of posterior samples approximates the MMSE estimator, leading to improved
+            PSNR and SSIM but degraded LPIPS. The dashed lines denote the performance of a
+            supervised U-Net trained to minimize MSE. Notably, while MMSE averaging can
+            surpass U-Net in distortion-based metrics, it produces perceptually smoother
+            reconstructions.
+          </p>
+        </figcaption>
+      </figure>
 
-      <div class="card single-card">
-        <h3>Quantitative Comparison</h3>
-        <img src="assets/table1.png" alt="Table 1 quantitative results" />
-      </div>
+      <figure class="result-figure compact-result-figure">
+        <img
+          src="assets/figure4.png"
+          alt="Quantitative results on natural image inpainting problem"
+        />
 
-      <div class="card single-card">
-        <h3>Representative Reconstructions</h3>
-        <img src="assets/figure2.png" alt="Figure 2 representative reconstructions" />
-      </div>
-
-      <div class="card single-card">
-        <h3>Effect of Sample Averaging</h3>
-        <img src="assets/figure3.png" alt="Figure 3 effect of sample averaging" />
-      </div>
+        <figcaption>
+          <p>
+            <strong>Figure 4.</strong>
+            Quantitative results on natural image inpainting problem.
+          </p>
+        </figcaption>
+      </figure>
     </section>
 
     <section class="section">
       <div class="text-block">
         <h2>BibTeX</h2>
+        <div class="section-divider"></div>
 
         <pre><code>@article{shi2026nullflow,
   title   = {NullFlow: One-Step Generative Reconstruction},
@@ -164,7 +217,13 @@
   </main>
 
   <footer>
-    <p>Computational Imaging Group</p>
+    <p>
+      This work was supported in part by NSF CCF-2622128 and CCF-2625643
+      (NSF CAREER).
+    </p>
+    <p>
+      University of Wisconsin–Madison · Washington University in St. Louis
+    </p>
   </footer>
 </body>
 </html>
